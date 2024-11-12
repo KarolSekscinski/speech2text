@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
 
-from soundutils.configs import BaseConfig
+from soundutils.configs import BaseModelConfig
 
 
-class ModelConfigs(BaseConfig):
+class ModelConfigs(BaseModelConfig):
     def __init__(self):
         super().__init__()
         self.model_name = os.path.join("Models", datetime.strftime(datetime.now(), "%Y%m%d%H%M"))

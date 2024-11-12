@@ -2,7 +2,7 @@ import os
 import yaml
 
 
-class BaseConfig:
+class BaseModelConfig:
     def __init__(self):
         self.model_path = None
 
@@ -13,7 +13,7 @@ class BaseConfig:
                             if key not in ["__module__", "__init__", "__doc__", "__annotations__"]}
         instance_attributes = self.__dict__
 
-        # first init with class attributes then apply instance attributes overwriting any existing duplicate attributes
+        # first init with class attributes then apply instance attributes
         all_attributes = class_attributes.copy()
         all_attributes.update(instance_attributes)
 
@@ -21,7 +21,7 @@ class BaseConfig:
 
     def save(self, name: str = "configs.yml"):
         if self.model_path is None:
-            raise Exception("Model path is not defined")
+            raise Exception("Model path is not defined.")
 
         # Create directory if not exist
         if not os.path.exists(self.model_path):
@@ -34,8 +34,7 @@ class BaseConfig:
     def load(configs_path: str):
         with open(configs_path, "r") as f:
             configs = yaml.load(f, Loader=yaml.FullLoader)
-
-        config = BaseConfig()
+        config = BaseModelConfig()
         for key, value in configs.items():
             setattr(config, key, value)
 

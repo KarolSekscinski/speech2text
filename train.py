@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 
 from keras.src.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, TensorBoard
-from configs import ModelConfigs
 
 from soundutils.preprocess import WavReader
 
