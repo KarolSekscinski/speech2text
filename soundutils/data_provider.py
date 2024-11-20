@@ -242,7 +242,7 @@ class BasicDataProvider:
                 self._cache[batch_data[0]] = (copy.deepcopy(data), copy.deepcopy(annotation))
 
         # then augment, transform and postprocess the batch data
-        for objects in [self._augmenters, self._transformers]:
+        for objects in [self.augmenters, self.transformers]:
             for _object in objects:
                 data, annotation = _object(data, annotation)
 
