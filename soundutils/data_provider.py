@@ -5,9 +5,9 @@ import typing
 import os
 import copy
 import logging
-import tensorflow as tf
-from ..augmenters import Augmenter
-from ..transformers import Transformer
+
+from .augmenters import Augmenter
+from .transformers import Transformer
 
 
 class BasicDataProvider:
@@ -287,8 +287,3 @@ class BasicDataProvider:
             return np.array(batch_data), np.array(batch_annotations)
         except Exception:
             return batch_data, batch_annotations
-
-
-class AudioDataProvider(BasicDataProvider, tf.kieras.utils.Sequence):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
