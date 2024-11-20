@@ -4,7 +4,7 @@ import numpy as np
 import importlib
 import threading
 
-from annotations.audio import Audio
+from soundutils.annotations.audio import Audio
 
 
 class Transformer:

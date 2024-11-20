@@ -3,7 +3,7 @@ import typing
 import numpy as np
 import logging
 
-from annotations.audio import Audio
+from soundutils.annotations.audio import Audio
 
 
 def randomness_decorator(func):
