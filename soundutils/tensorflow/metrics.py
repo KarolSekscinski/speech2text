@@ -1,6 +1,7 @@
 import tensorflow as tf
 from keras.src.metrics import Metric
 
+
 class CERMetric(Metric):
     """
     A custom Tensorflow metric to compute Character Error Rate (CER) metric
@@ -10,7 +11,7 @@ class CERMetric(Metric):
         name: (Optional) A string name of the metric instance.
         **kwargs: Additional keyword arguments
     """
-    def __init__(self, vocabulary, name, **kwargs):
+    def __init__(self, vocabulary, name="CER", **kwargs):
         # Init the base Metric class
         super(CERMetric, self).__init__(name=name, **kwargs)
 
