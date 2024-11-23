@@ -1,4 +1,5 @@
 import tensorflow as tf
+
 try:
     [tf.config.experimental.set_memory_growth(gpu, True) for gpu in tf.config.experimental.list_physical_devices('GPU')]
 except Exception:
@@ -21,32 +22,38 @@ from soundutils.tensorflow.metrics import CERMetric, WERMetric
 from configs import ModelConfigs
 from model import train_model
 
-dataset_path = 'D:/Dokumenty/en~/clips_wav'
-metadata_path = 'D:/Dokumenty/en~/metadata.tsv'
+import gcsfs
+
+bucket_name = "modelasr-studia1"
+dataset_path = f'gs://{bucket_name}/data'
+metadata_path = f'gs://{bucket_name}/metadata/metadata.tsv'
+
+fs = gcsfs.GCSFileSystem()
 
 # Read metadata files and parse it
 columns = ['path', 'sentence']
-train_df = pd.read_csv(metadata_path, sep="\t")
-# validated_df = pd.read_csv
-train_df = train_df[columns]
+with fs.open(metadata_path, 'r') as f:
+    metadata_df = pd.read_csv(metadata_path, sep="\t")
+metadata_df = metadata_df[columns]
 
 # for dev
-train_df = train_df.head(1000)
+metadata_df = metadata_df.head(1000)
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"{dataset_path}/{file.replace('.mp3', '.wav')}", label.lower()] for file, label in
-           train_df.values.tolist()]
+           metadata_df.values.tolist()]
 
 # create a ModelConfigs object to store model conf
 configs = ModelConfigs()
 
 max_text_length, max_spectrogram_length = 0, 0
 for file_path, label in tqdm(dataset):
-    spectrogram = WavReader.get_spectrogram(file_path,
-                                            frame_length=configs.frame_length,
-                                            frame_step=configs.frame_step,
-                                            fft_length=configs.fft_length
-                                            )
+    with fs.open(file_path, 'rb') as f:
+        spectrogram = WavReader.get_spectrogram(f,
+                                                frame_length=configs.frame_length,
+                                                frame_step=configs.frame_step,
+                                                fft_length=configs.fft_length
+                                                )
     valid_label = [c for c in label if c in configs.vocab]
     max_text_length = max(max_text_length, len(valid_label))
     max_spectrogram_length = max(max_spectrogram_length, spectrogram.shape[0])
@@ -100,16 +107,17 @@ model.compile(
 model.summary(line_length=120)
 
 # Define callbacks
+model_save_path = f"gs://{bucket_name}/models"
 early_stopping = EarlyStopping(monitor="val_CER", patience=20, verbose=1, mode="min")
-checkpoint = ModelCheckpoint(f"{configs.model_path}/model.h5",
+checkpoint = ModelCheckpoint(f"{model_save_path}/{configs.model_path}/model.h5",
                              monitor="val_CER", verbose=1,
                              save_best_only=True, mode="min")
 train_logger = TrainLogger(configs.model_path)
-tb_callback = TensorBoard(f"{configs.model_path}/logs", update_freq=1)
+tb_callback = TensorBoard(f"{model_save_path}/{configs.model_path}/logs", update_freq=1)
 reduce_LROnPlateau = ReduceLROnPlateau(monitor="val_CER", factor=0.8,
                                        min_delta=1e-10, patience=5,
                                        verbose=1, mode="auto")
-model2onnx = Model2onnx(f"{configs.model_path}/model.h5")
+model2onnx = Model2onnx(f"{model_save_path}/{configs.model_path}/model.h5")
 
 # Train the model
 model.fit(
@@ -121,5 +129,5 @@ model.fit(
 )
 
 # Save training and validation datasets as csv files
-train_data_provider.to_csv(os.path.join(configs.model_path, "train.csv"))
-val_data_provider.to_csv(os.path.join(configs.model_path, "val.csv"))
+train_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/train.csv")
+val_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/val.csv")
