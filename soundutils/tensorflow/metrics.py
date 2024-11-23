@@ -1,81 +1,92 @@
 import tensorflow as tf
-from keras.src.metrics import Metric
+from keras.metrics import Metric
 
 
 class CERMetric(Metric):
-    """
-    A custom Tensorflow metric to compute Character Error Rate (CER) metric
+    """A custom TensorFlow metric to compute the Character Error Rate (CER).
 
     Args:
-        vocabulary: A string of the vocabulary to encode the labels.
-        name: (Optional) A string name of the metric instance.
-        **kwargs: Additional keyword arguments
+        vocabulary: A string of the vocabulary used to encode the labels.
+        name: (Optional) string name of the metric instance.
+        **kwargs: Additional keyword arguments.
     """
+
     def __init__(self, vocabulary, name="CER", **kwargs):
-        # Init the base Metric class
+        # Initialize the base Metric class
         super(CERMetric, self).__init__(name=name, **kwargs)
 
-        # Init variables to keep track of the cumulative character/word error rates and counter
-        self.cer_accumulator = tf.Variable(0.0, name='cer_accumulator', dtype=tf.float32)
-        self.batch_counter = tf.Variable(0, name='batch_counter', dtype=tf.int32)
+        # Initialize variables to keep track of the cumulative character/word error rates and counter
+        self.cer_accumulator = tf.Variable(0.0, name="cer_accumulator", dtype=tf.float32)
+        self.batch_counter = tf.Variable(0, name="batch_counter", dtype=tf.int32)
+
+        # Store the vocabulary as an attribute
         self.vocabulary = tf.constant(list(vocabulary))
 
     @staticmethod
-    def get_cer(decoded_predictions: tf.Tensor, y_true: tf.Tensor, vocab: tf.Tensor, padding=-1):
-        """
-        Calculate the cer between the predicted labels and the true labels for a batch of input data
+    def get_cer(pred_decoded, y_true, vocab, padding=-1):
+        """ Calculates the character error rate (CER) between the predicted labels and true labels for a batch of input data.
 
         Args:
-            decoded_predictions: (tf.Tensor) The predicted labels, with dtype=tf.int32, usually output from tf.keras.backend.ctc_decode
-            y_true: (tf.Tensor) The true labels, with dtype=tf.int32
-            vocab: (tf.Tensor) The vocabulary tensor, with dtype=tf.string
-            padding: (int, optional) The padding token when converting to sparse tensor. (default: -1)
+            pred_decoded (tf.Tensor): The predicted labels, with dtype=tf.int32, usually output from tf.keras.backend.ctc_decode
+            y_true (tf.Tensor): The true labels, with dtype=tf.int32
+            vocab (tf.Tensor): The vocabulary tensor, with dtype=tf.string
+            padding (int, optional): The padding token when converting to sparse tensor. Defaults to -1.
 
         Returns:
-            tf.Tensor: The CER metric between decoded_predictions and y_true
+            tf.Tensor: The CER between the predicted labels and true labels
         """
         # Keep only valid indices in the predicted labels tensor, replacing invalid indices with padding token
-        vocab_len = tf.cast(tf.shape(vocab)[0], tf.int64)
-        valid_predictions_indices = tf.less(decoded_predictions, vocab_len)
-        valid_predictions = tf.where(valid_predictions_indices, decoded_predictions, padding)
+        vocab_length = tf.cast(tf.shape(vocab)[0], tf.int64)
+        valid_pred_indices = tf.less(pred_decoded, vocab_length)
+        valid_pred = tf.where(valid_pred_indices, pred_decoded, padding)
 
         # Keep only valid indices in the true labels tensor, replacing invalid indices with padding token
         y_true = tf.cast(y_true, tf.int64)
-        valid_true_indices = tf.less(y_true, vocab_len)
+        valid_true_indices = tf.less(y_true, vocab_length)
         valid_true = tf.where(valid_true_indices, y_true, padding)
-        
+
         # Convert the valid predicted labels tensor to a sparse tensor
-        sparse_predictions = tf.RaggedTensor.from_tensor(valid_predictions, padding).to_sparse()
+        sparse_pred = tf.RaggedTensor.from_tensor(valid_pred, padding=padding).to_sparse()
 
         # Convert the valid true labels tensor to a sparse tensor
-        sparse_true = tf.RaggedTensor.from_tensor(valid_true, padding).to_sparse()
+        sparse_true = tf.RaggedTensor.from_tensor(valid_true, padding=padding).to_sparse()
 
-        # Calculate the normalized edit distance between the sparse predicted labels tensor
-        # and sparse true labels tensor
-        distance = tf.edit_distance(sparse_predictions, sparse_true, normalize=True)
+        # Calculate the normalized edit distance between the sparse predicted labels tensor and sparse true labels tensor
+        distance = tf.edit_distance(sparse_pred, sparse_true, normalize=True)
 
         return distance
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        """
+        """Updates the state variables of the metric.
 
-        :param y_true:
-        :param y_pred:
-        :param sample_weight:
-        :return:
+        Args:
+            y_true: A tensor of true labels with shape (batch_size, sequence_length).
+            y_pred: A tensor of predicted labels with shape (batch_size, sequence_length, num_classes).
+            sample_weight: (Optional) a tensor of weights with shape (batch_size, sequence_length).
         """
         # Get the input shape and length
         input_shape = tf.keras.backend.shape(y_pred)
         input_length = tf.ones(shape=input_shape[0], dtype="int32") * tf.cast(input_shape[1], "int32")
 
+        # Decode the predicted labels using greedy decoding
         decode_predicted, log = tf.keras.backend.ctc_decode(y_pred, input_length, greedy=True)
 
-        # Calculate the normalized edit distance between the predicted labels and true labels tensor
+        # Calculate the normalized edit distance between the predicted labels and true labels tensors
         distance = self.get_cer(decode_predicted[0], y_true, self.vocabulary)
 
+        # Add the sum of the distance tensor to the cer_accumulator variable
         self.cer_accumulator.assign_add(tf.reduce_sum(distance))
 
+        # Increment the batch_counter by the batch size
         self.batch_counter.assign_add(input_shape[0])
+
+    def result(self):
+        """ Computes and returns the metric result.
+
+        Returns:
+            A TensorFlow float representing the CER (character error rate).
+        """
+        return tf.math.divide_no_nan(self.cer_accumulator, tf.cast(self.batch_counter, tf.float32))
 
 
 class WERMetric(Metric):
@@ -131,7 +142,7 @@ class WERMetric(Metric):
         return input_sparse_string
 
     @staticmethod
-    def get_wer(pred_decoded, y_true, vocab, padding = -1, separator = ""):
+    def get_wer(pred_decoded, y_true, vocab, padding=-1, separator=""):
         """ Calculate the normalized WER distance between the predicted labels and true labels tensors
 
         Args:

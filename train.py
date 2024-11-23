@@ -1,5 +1,4 @@
 import tensorflow as tf
-
 try:
     [tf.config.experimental.set_memory_growth(gpu, True) for gpu in tf.config.experimental.list_physical_devices('GPU')]
 except Exception:
@@ -9,7 +8,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-from keras.src.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, TensorBoard
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 
 from soundutils.preprocess import WavReader
 
@@ -102,7 +101,7 @@ model.summary(line_length=120)
 
 # Define callbacks
 early_stopping = EarlyStopping(monitor="val_CER", patience=20, verbose=1, mode="min")
-checkpoint = ModelCheckpoint(os.path.join(configs.model_path, ".keras"),
+checkpoint = ModelCheckpoint(f"{configs.model_path}/model.h5",
                              monitor="val_CER", verbose=1,
                              save_best_only=True, mode="min")
 train_logger = TrainLogger(configs.model_path)
@@ -110,15 +109,15 @@ tb_callback = TensorBoard(f"{configs.model_path}/logs", update_freq=1)
 reduce_LROnPlateau = ReduceLROnPlateau(monitor="val_CER", factor=0.8,
                                        min_delta=1e-10, patience=5,
                                        verbose=1, mode="auto")
-model2onnx = Model2onnx(os.path.join(configs.model_path, ".keras"))
+model2onnx = Model2onnx(f"{configs.model_path}/model.h5")
 
-# TODO fix training
 # Train the model
 model.fit(
     train_data_provider,
     validation_data=val_data_provider,
     epochs=configs.training_epochs,
-    callbacks=[early_stopping, checkpoint, train_logger, reduce_LROnPlateau, tb_callback, model2onnx]
+    callbacks=[early_stopping, checkpoint, train_logger, reduce_LROnPlateau, tb_callback, model2onnx],
+    workers=configs.train_workers
 )
 
 # Save training and validation datasets as csv files

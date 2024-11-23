@@ -1,6 +1,6 @@
 import tensorflow as tf
 from keras import layers
-from keras.src.models import Model
+from keras.models import Model
 
 from soundutils.model_utils import activation_layer
 

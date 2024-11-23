@@ -1,6 +1,6 @@
 import os
 import tensorflow as tf
-from keras.src.callbacks import Callback
+from keras.callbacks import Callback
 
 import logging
 
