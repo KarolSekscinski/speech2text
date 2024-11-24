@@ -17,7 +17,7 @@ from soundutils.transformers import LabelIndexerTransformer, LabelPaddingTransfo
 from soundutils.tensorflow.losses import CTCLoss
 from soundutils.tensorflow.callbacks import Model2onnx, TrainLogger
 from soundutils.tensorflow.metrics import CERMetric, WERMetric
-
+from cloud_utils import upload_to_gcs
 from configs import ModelConfigs
 from model import train_model
 
@@ -106,17 +106,16 @@ model.compile(
 model.summary(line_length=120)
 
 # Define callbacks
-model_save_path = f"gs://{bucket_name}/models"
 early_stopping = EarlyStopping(monitor="val_CER", patience=20, verbose=1, mode="min")
-checkpoint = ModelCheckpoint(f"{model_save_path}/{configs.model_path}/model.h5",
+checkpoint = ModelCheckpoint(f"{configs.model_path}/model.h5",
                              monitor="val_CER", verbose=1,
                              save_best_only=True, mode="min")
 train_logger = TrainLogger(configs.model_path)
-tb_callback = TensorBoard(f"{model_save_path}/{configs.model_path}/logs", update_freq=1)
+tb_callback = TensorBoard(f"{configs.model_path}/logs", update_freq=1)
 reduce_LROnPlateau = ReduceLROnPlateau(monitor="val_CER", factor=0.8,
                                        min_delta=1e-10, patience=5,
                                        verbose=1, mode="auto")
-model2onnx = Model2onnx(f"{model_save_path}/{configs.model_path}/model.h5")
+model2onnx = Model2onnx(f"{configs.model_path}/model.h5")
 
 # Train the model
 model.fit(
@@ -127,6 +126,12 @@ model.fit(
     workers=configs.train_workers
 )
 
+model_save_path = f"gs://{bucket_name}/models/{configs.model_path}"
+upload_to_gcs(bucket_name, configs.model_path, model_save_path)
+
 # Save training and validation datasets as csv files
-train_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/train.tsv")
-val_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/val.csv")
+train_data_provider.to_csv(f"{configs.model_path}/train.tsv")
+val_data_provider.to_csv(f"{configs.model_path}/val.csv")
+
+upload_to_gcs(bucket_name, f"{configs.model_path}/train.tsv", model_save_path)
+upload_to_gcs(bucket_name, f"{configs.model_path}/val.tsv", model_save_path)

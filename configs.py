@@ -7,7 +7,7 @@ from soundutils.configs import BaseModelConfig
 class ModelConfigs(BaseModelConfig):
     def __init__(self):
         super().__init__()
-        self.model_path = datetime.strftime(datetime.now(), "%Y%m%d%H%M")
+        os.path.join("Models", datetime.strftime(datetime.now(), "%Y%m%d%H%M"))
         self.frame_length = 256
         self.frame_step = 160
         self.fft_length = 384
