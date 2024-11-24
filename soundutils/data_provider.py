@@ -4,6 +4,7 @@ import typing
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import fsspec
 
 from .augmenters import Augmenter
 from .transformers import Transformer
@@ -142,7 +143,20 @@ class DataProvider:
 
     def validate_list_dataset(self, dataset: list) -> list:
         """ Validate a list dataset """
-        validated_data = [data for data in tqdm(dataset, desc="Validating Dataset") if os.path.exists(data[0])]
+        validated_data = []
+        fs = fsspec.filesystem("gcs")
+        for data in tqdm(dataset, desc="Validating Dataset"):
+            path = data[0]
+            if path.startswith("gs://"):
+                if fs.exists(path):
+                    validated_data.append(data)
+                else:
+                    self.logger.warning(f"File not found in GCS: {path}")
+            elif os.path.exists(path):
+                validated_data.append(data)
+            else:
+                self.logger.warning(f"File not found: {path}")
+
         if not validated_data:
             raise FileNotFoundError("No valid data found in dataset.")
 
@@ -152,8 +166,16 @@ class DataProvider:
         """ Validate the dataset and return the dataset """
 
         if isinstance(dataset, str):
-            if os.path.exists(dataset):
+            if dataset.startswith("gs://"):
+                fs = fsspec.filesystem("gcs")
+                if fs.exists(dataset):
+                    return dataset
+                else:
+                    raise FileNotFoundError(f"Dataset not found in GCS: {dataset}")
+            elif os.path.exists(dataset):
                 return dataset
+            else:
+                raise FileNotFoundError(f"Dataset not found: {dataset}")
         elif isinstance(dataset, list):
             return self.validate_list_dataset(dataset)
         elif isinstance(dataset, pd.DataFrame):
@@ -189,8 +211,7 @@ class DataProvider:
             index (bool, optional): Whether to save the index. Defaults to False.
         """
         df = pd.DataFrame(self._dataset)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        df.to_csv(path, index=index)
+        df.to_csv(path, index=index, sep="\t")
 
     def get_batch_annotations(self, index: int) -> typing.List:
         """ Returns a batch of annotations by batch index in the dataset

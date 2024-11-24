@@ -5,7 +5,6 @@ try:
 except Exception:
     pass
 
-import os
 import pandas as pd
 from tqdm import tqdm
 
@@ -36,8 +35,6 @@ with fs.open(metadata_path, 'r') as f:
     metadata_df = pd.read_csv(metadata_path, sep="\t")
 metadata_df = metadata_df[columns]
 
-# for dev
-metadata_df = metadata_df.head(1000)
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"{dataset_path}/{file.replace('.mp3', '.wav')}", label.lower()] for file, label in
@@ -48,7 +45,7 @@ configs = ModelConfigs()
 
 max_text_length, max_spectrogram_length = 0, 0
 for file_path, label in tqdm(dataset):
-    with fs.open(file_path, 'rb') as f:
+    with fs.open(file_path, 'r') as f:
         spectrogram = WavReader.get_spectrogram(f,
                                                 frame_length=configs.frame_length,
                                                 frame_step=configs.frame_step,
@@ -129,5 +126,5 @@ model.fit(
 )
 
 # Save training and validation datasets as csv files
-train_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/train.csv")
+train_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/train.tsv")
 val_data_provider.to_csv(f"{model_save_path}/{configs.model_path}/val.csv")
