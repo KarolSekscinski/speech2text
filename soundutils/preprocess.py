@@ -2,6 +2,7 @@ import importlib
 import io
 import typing
 
+import fsspec
 from gcsfs.core import GCSFile
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,6 +51,11 @@ class WavReader:
             # Read from GCS file object
             with io.BytesIO(path_or_file.read()) as audio_binary:
                 audio, sample_rate = WavReader.librosa.load(audio_binary, sr=sr)
+        elif isinstance(path_or_file, str) and path_or_file.startswith("gs://"):
+            fs = fsspec.filesystem("gcs")
+            with fs.open(path_or_file, "rb") as f:
+                with io.BytesIO(f.read()) as audio_binary:
+                    audio, sample_rate = WavReader.librosa.load(audio_binary, sr=sr)
         elif isinstance(path_or_file, str):
             # Local path handling
             audio, sample_rate = WavReader.librosa.load(path_or_file, sr=sr)
