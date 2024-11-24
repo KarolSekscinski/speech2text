@@ -126,12 +126,8 @@ model.fit(
     workers=configs.train_workers
 )
 
-model_save_path = f"gs://{bucket_name}/{configs.model_path}"
-upload_to_gcs(bucket_name, configs.model_path, model_save_path)
-
 # Save training and validation datasets as csv files
 train_data_provider.to_csv(f"{configs.model_path}/train.tsv")
 val_data_provider.to_csv(f"{configs.model_path}/val.csv")
+upload_to_gcs(bucket_name, configs.model_path, configs.model_path)
 
-upload_to_gcs(bucket_name, f"{configs.model_path}/train.tsv", model_save_path)
-upload_to_gcs(bucket_name, f"{configs.model_path}/val.tsv", model_save_path)
