@@ -44,14 +44,24 @@ class WavReader:
         import_librosa(self)
 
     @staticmethod
-    def load_audio(path: str, sr: int = None):
-        if path.startswith("gs://"):
+    def load_audio(path_or_file, sr: int = None):
+        # Check if input is a GCS file handle or a path
+        if isinstance(path_or_file, fsspec.spec.AbstractFileSystemFile):
+            # Read from GCS file object
+            with io.BytesIO(path_or_file.read()) as audio_binary:
+                audio, sample_rate = WavReader.librosa.load(audio_binary, sr=sr)
+        elif isinstance(path_or_file, str) and path_or_file.startswith("gs://"):
+            # Read from GCS path
             fs = fsspec.filesystem("gcs")
-            with fs.open(path, "rb") as f:
+            with fs.open(path_or_file, "rb") as f:
                 with io.BytesIO(f.read()) as audio_binary:
                     audio, sample_rate = WavReader.librosa.load(audio_binary, sr=sr)
+        elif isinstance(path_or_file, str):
+            # Local path handling
+            audio, sample_rate = WavReader.librosa.load(path_or_file, sr=sr)
         else:
-            audio, sample_rate = WavReader.librosa.load(path, sr=sr)
+            raise ValueError(f"Unsupported input type: {type(path_or_file)}")
+
         return audio, sample_rate
 
     @staticmethod
