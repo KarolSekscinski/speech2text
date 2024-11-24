@@ -1,6 +1,8 @@
 import importlib
+import io
 import typing
 
+import fsspec
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -42,12 +44,23 @@ class WavReader:
         import_librosa(self)
 
     @staticmethod
+    def load_audio(path: str, sr: int = None):
+        if path.startswith("gs://"):
+            fs = fsspec.filesystem("gcs")
+            with fs.open(path, "rb") as f:
+                with io.BytesIO(f.read()) as audio_binary:
+                    audio, sample_rate = WavReader.librosa.load(audio_binary, sr=sr)
+        else:
+            audio, sample_rate = WavReader.librosa.load(path, sr=sr)
+        return audio, sample_rate
+
+    @staticmethod
     def get_spectrogram(wav_path: str, frame_length: int, frame_step: int, fft_length: int) -> np.ndarray:
         """Compute the spectrogram of a wav file"""
         import_librosa(WavReader)
 
         # Load the wav file and store the audio data in the variable 'audio'
-        audio, original_sample_rate = WavReader.librosa.load(wav_path)
+        audio, original_sample_rate = WavReader.load_audio(wav_path, 32000)
 
         # Compute the Short Time Fourier Transform (STFT) of the audio data
         # STFT is computed with a hop length of 'frame_step' samples, a window length of 'frame_length' samples and 'fft_length' FFT components
