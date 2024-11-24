@@ -126,7 +126,7 @@ model.fit(
     workers=configs.train_workers
 )
 
-model_save_path = f"gs://{bucket_name}/models/{configs.model_path}"
+model_save_path = f"gs://{bucket_name}/{configs.model_path}"
 upload_to_gcs(bucket_name, configs.model_path, model_save_path)
 
 # Save training and validation datasets as csv files
