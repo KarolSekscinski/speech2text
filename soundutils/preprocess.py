@@ -46,7 +46,7 @@ class WavReader:
     @staticmethod
     def load_audio(path_or_file, sr: int = None):
         # Check if input is a GCS file handle or a path
-        if isinstance(path_or_file, fsspec.spec.AbstractFileSystemFile):
+        if isinstance(path_or_file, fsspec.spec.AbstractFileSystem):
             # Read from GCS file object
             with io.BytesIO(path_or_file.read()) as audio_binary:
                 audio, sample_rate = WavReader.librosa.load(audio_binary, sr=sr)
