@@ -29,16 +29,10 @@ sudo make altinstall
 echo "Verifying Python installation..."
 python3.10 --version
 
-# Set alias for Python
-echo "Setting alias for Python 3.10..."
-alias python=python3.10
-echo 'alias python="python3.10"' >> ~/.bashrc
-source ~/.bashrc
 
 # Create a Python virtual environment
 echo "Creating a Python virtual environment..."
-cd ..
-python -m venv my_venv
+python3.10 -m venv my_venv
 
 # Activate the virtual environment
 echo "Activating the Python virtual environment..."
