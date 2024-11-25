@@ -1,10 +1,4 @@
 import tensorflow as tf
-
-try:
-    [tf.config.experimental.set_memory_growth(gpu, True) for gpu in tf.config.experimental.list_physical_devices('GPU')]
-except Exception:
-    pass
-
 import pandas as pd
 from tqdm import tqdm
 
@@ -20,8 +14,13 @@ from soundutils.tensorflow.metrics import CERMetric, WERMetric
 from cloud_utils import upload_to_gcs
 from configs import ModelConfigs
 from model import train_model
-
+import os
 import gcsfs
+
+# for dev
+os.environ['OMP_NUM_THREADS'] = '16'
+os.environ['TF_NUM_INTEROP_THREADS'] = '16'
+
 
 bucket_name = "modelasr-studia1"
 dataset_path = f'gs://{bucket_name}/data'
@@ -35,6 +34,8 @@ with fs.open(metadata_path, 'r') as f:
     metadata_df = pd.read_csv(metadata_path, sep="\t")
 metadata_df = metadata_df[columns]
 
+# for dev
+metadata_df = metadata_df.head(1000)
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"{dataset_path}/{file.replace('.mp3', '.wav')}", label.lower()] for file, label in
@@ -121,7 +122,8 @@ model.fit(
     validation_data=val_data_provider,
     epochs=configs.training_epochs,
     callbacks=[early_stopping, checkpoint, train_logger, reduce_LROnPlateau, tb_callback, model2onnx],
-    workers=configs.train_workers
+    workers=configs.train_workers,
+    use_multiprocessing=True
 )
 
 # Save training and validation datasets as csv files
