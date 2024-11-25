@@ -17,10 +17,6 @@ from model import train_model
 import os
 import gcsfs
 
-# for dev
-os.environ['OMP_NUM_THREADS'] = '16'
-os.environ['TF_NUM_INTEROP_THREADS'] = '16'
-
 
 bucket_name = "modelasr-studia1"
 dataset_path = f'gs://{bucket_name}/data'
@@ -35,7 +31,7 @@ with fs.open(metadata_path, 'r') as f:
 metadata_df = metadata_df[columns]
 
 # for dev
-metadata_df = metadata_df.head(1000)
+# metadata_df = metadata_df.head(1000)
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"{dataset_path}/{file.replace('.mp3', '.wav')}", label.lower()] for file, label in
