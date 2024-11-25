@@ -128,8 +128,7 @@ model.fit(
     validation_data=val_data_provider,
     epochs=configs.training_epochs,
     callbacks=[early_stopping, checkpoint, train_logger, reduce_LROnPlateau, tb_callback, model2onnx],
-    workers=configs.train_workers,
-    use_multiprocessing=True
+    workers=configs.train_workers
 )
 
 bucket_name = "modelasr-studia1"
