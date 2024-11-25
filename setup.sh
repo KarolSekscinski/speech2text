@@ -31,7 +31,7 @@ python3.10 --version
 
 # Set alias for Python
 echo "Setting alias for Python 3.10..."
-alias python="python3.10"
+alias python=python3.10
 echo 'alias python="python3.10"' >> ~/.bashrc
 source ~/.bashrc
 

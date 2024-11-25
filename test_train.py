@@ -1,4 +1,7 @@
 import tensorflow as tf
+try: [tf.config.experimental.set_memory_growth(gpu, True) for gpu in tf.config.experimental.list_physical_devices("GPU")]
+except: pass
+
 import pandas as pd
 from tqdm import tqdm
 from urllib.request import urlopen
@@ -19,6 +22,7 @@ from cloud_utils import upload_to_gcs
 from configs import ModelConfigs
 from model import train_model
 
+
 def download_and_unzip(url, extract_to="Datasets", chunk_size=1024*1024):
     http_response = urlopen(url)
     data = b""
@@ -26,9 +30,9 @@ def download_and_unzip(url, extract_to="Datasets", chunk_size=1024*1024):
     for _ in tqdm(range(iterations)):
         data += http_response.read(chunk_size)
 
-    tarFile = tarfile.open(fileobj=BytesIO(data), mode="r|bz2")
-    tarFile.extractall(path=extract_to)
-    tarFile.close()
+    tar_file = tarfile.open(fileobj=BytesIO(data), mode="r|bz2")
+    tar_file.extractall(path=extract_to)
+    tar_file.close()
 
 
 dataset_path = os.path.join("Datasets", "LJSpeech-1.1")
