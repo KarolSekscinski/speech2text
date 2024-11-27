@@ -3,7 +3,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-echo "Starting setup for TensorFlow with GPU on Debian..."
+echo "Starting setup for TensorFlow with GPU (Tesla P4) on Debian..."
 
 # Update and upgrade the system
 echo "Updating and upgrading the system..."
@@ -23,6 +23,7 @@ if [ -z "$NVIDIA_DRIVER" ]; then
   exit 1
 fi
 
+# Install the recommended NVIDIA driver
 sudo apt install -y nvidia-driver
 
 # Reboot might be necessary for the driver to be fully operational
@@ -83,4 +84,4 @@ pip install tensorflow==${TF_VERSION}
 echo "Verifying TensorFlow GPU support..."
 python -c "import tensorflow as tf; print('TensorFlow version:', tf.__version__); print('GPU available:', tf.config.list_physical_devices('GPU'))"
 
-echo "Setup completed! TensorFlow with GPU support is ready."
+echo "Setup completed! TensorFlow with GPU support for Tesla P4 is ready."
