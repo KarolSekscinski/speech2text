@@ -19,7 +19,7 @@ import gcsfs
 
 bucket_name = "modelasr-studia1"
 dataset_path = f'gs://{bucket_name}/data'
-metadata_path = f'gs://{bucket_name}/metadata/metadata.tsv'
+metadata_path = f'gs://{bucket_name}/metadata/validated2.tsv'
 
 fs = gcsfs.GCSFileSystem()
 
@@ -29,8 +29,6 @@ with fs.open(metadata_path, 'r') as f:
     metadata_df = pd.read_csv(metadata_path, sep="\t")
 metadata_df = metadata_df[columns]
 
-# for dev
-# metadata_df = metadata_df.head(1000)
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"{dataset_path}/{file.replace('.mp3', '.wav')}", label.lower()] for file, label in

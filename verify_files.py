@@ -5,11 +5,11 @@ import pandas as pd
 directory_path = "D:/Dokumenty/en~/clips_wav"
 
 # Path to the metadata CSV
-csvs = ["validated.tsv", "test.tsv", "dev.tsv", "other.tsv"]
+csvs = ["validated.tsv"]
 path_to_metadata = "D:/Dokumenty/en~/"
 
 # save new csv
-path_to_save = "D:/Dokumenty/en~/metadata.tsv"
+path_to_save = "D:/Dokumenty/en~/validated1.tsv"
 
 # List all .wav files in directory A
 wav_files = {file for file in os.listdir(directory_path) if file.endswith('.wav')}
@@ -25,21 +25,29 @@ final_df = {
     "accent": []
 }
 final_df = pd.DataFrame(final_df)
-for csv in csvs:
-    metadata = pd.read_csv(os.path.join(path_to_metadata, csv), sep="\t")
-    # Filter metadata to keep only rows where file_path exists in wav_files
-    metadata['file_name'] = metadata['path'].apply(os.path.basename)  # Extract file names
-    metadata['file_name'] = metadata['file_name'].apply(lambda x: x.replace(".mp3", ".wav"))
-    filtered_metadata = metadata[metadata['file_name'].isin(wav_files)]
-    # Drop the temporary 'file_name' column
-    filtered_metadata = filtered_metadata.drop(columns=['file_name'])
-    print(metadata.shape)
-    print(filtered_metadata.shape)
-    final_df = pd.concat([final_df, filtered_metadata], ignore_index=True)
+metadata = pd.read_csv(os.path.join(path_to_metadata, csvs[0]), sep="\t")
+metadata['file_name'] = metadata['path'].apply(os.path.basename)  # Extract file names
+metadata['file_name'] = metadata['file_name'].apply(lambda x: x.replace(".mp3", ".wav"))
+filtered_metadata = metadata[metadata['file_name'].isin(wav_files)]
+filtered_metadata = filtered_metadata.drop(columns=['file_name'])
+
+# for csv in csvs:
+#     metadata = pd.read_csv(os.path.join(path_to_metadata, csv), sep="\t")
+#     # Filter metadata to keep only rows where file_path exists in wav_files
+#     metadata['file_name'] = metadata['path'].apply(os.path.basename)  # Extract file names
+#     metadata['file_name'] = metadata['file_name'].apply(lambda x: x.replace(".mp3", ".wav"))
+#     filtered_metadata = metadata[metadata['file_name'].isin(wav_files)]
+#     # Drop the temporary 'file_name' column
+#     filtered_metadata = filtered_metadata.drop(columns=['file_name'])
+#     print(metadata.shape)
+#     print(filtered_metadata.shape)
+#     final_df = pd.concat([final_df, filtered_metadata], ignore_index=True)
 
 columns = ['path', 'sentence']
 
-df = final_df[columns]
+# df = final_df[columns]
+df = filtered_metadata[columns]
+print(df.columns)
 dataset = []
 files_to_delete = []
 for file, label in df.values.tolist():
@@ -54,6 +62,7 @@ condition = ~df['path'].isin(files_to_delete)
 
 # Filter the DataFrame based on the condition
 df_filtered = df[condition]
+print(df_filtered.columns)
 
 # Save the updated metadata.csv
 df_filtered.to_csv(path_to_save, index=False, sep="\t")
