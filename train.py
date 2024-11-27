@@ -14,7 +14,6 @@ from soundutils.tensorflow.metrics import CERMetric, WERMetric
 from cloud_utils import upload_to_gcs
 from configs import ModelConfigs
 from model import train_model
-import os
 import gcsfs
 
 
@@ -119,11 +118,10 @@ model.fit(
     epochs=configs.training_epochs,
     callbacks=[early_stopping, checkpoint, train_logger, reduce_LROnPlateau, tb_callback, model2onnx],
     workers=configs.train_workers,
-    use_multiprocessing=True
 )
 
 # Save training and validation datasets as csv files
 train_data_provider.to_csv(f"{configs.model_path}/train.tsv")
-val_data_provider.to_csv(f"{configs.model_path}/val.csv")
+val_data_provider.to_csv(f"{configs.model_path}/val.tsv")
 upload_to_gcs(bucket_name, configs.model_path, configs.model_path)
 
