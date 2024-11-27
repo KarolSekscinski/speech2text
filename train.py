@@ -31,7 +31,7 @@ with fs.open(metadata_path, 'r') as f:
 metadata_df = metadata_df[columns]
 
 # for dev
-# metadata_df = metadata_df.head(1000)
+metadata_df = metadata_df.head(1000)
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"{dataset_path}/{file.replace('.mp3', '.wav')}", label.lower()] for file, label in
