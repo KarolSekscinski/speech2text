@@ -17,7 +17,7 @@ class ModelConfigs(BaseModelConfig):
         self.max_text_length = None
         self.max_spectrogram_length = None
 
-        self.batch_size = 4
+        self.batch_size = 8
         self.learning_rate = 0.0005
         self.training_epochs = 75
         self.train_workers = 2

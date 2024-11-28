@@ -2,7 +2,7 @@ import tensorflow as tf
 from keras import layers
 
 
-def activation_layer(layer, activation: str="relu", alpha: float=0.1) -> tf.Tensor:
+def activation_layer(layer, activation: str = "relu", alpha: float = 0.1) -> tf.Tensor:
     """ Activation layer wrapper for LeakyReLU and ReLU activation functions
     Args:
         layer: tf.Tensor
@@ -17,4 +17,3 @@ def activation_layer(layer, activation: str="relu", alpha: float=0.1) -> tf.Tens
         layer = layers.LeakyReLU(alpha=alpha)(layer)
 
     return layer
-

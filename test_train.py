@@ -48,8 +48,7 @@ metadata_df = pd.read_csv(metadata_path, sep="|", header=None, quoting=3)
 metadata_df.columns = ["file_name", "transcription", "normalized_transcription"]
 metadata_df = metadata_df[["file_name", "normalized_transcription"]]
 
-# for dev
-metadata_df = metadata_df.head(200)
+
 
 # structure the dataset where each row is a list of [wav_file_path, sound transcription]
 dataset = [[f"Datasets/LJSpeech-1.1/wavs/{file}.wav", label.lower()] for file, label in metadata_df.values.tolist()]
