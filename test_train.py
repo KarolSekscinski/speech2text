@@ -141,6 +141,6 @@ bucket_name = "modelasr-studia1"
 
 # Save training and validation datasets as csv files
 train_data_provider.to_csv(f"{configs.model_path}/train.tsv")
-val_data_provider.to_csv(f"{configs.model_path}/val.csv")
+val_data_provider.to_csv(f"{configs.model_path}/val.tsv")
 upload_to_gcs(bucket_name, configs.model_path, configs.model_path)
 
